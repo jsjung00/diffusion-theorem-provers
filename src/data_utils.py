@@ -6,7 +6,12 @@ import pickle
 import os
 import sys
 import random
-from data_utils5 import *
+from pathlib import Path 
+sys.path.insert(1, str(os.path.join(Path(__file__).parent, 'holophrasm')))
+
+print(sys.path)
+print(os.listdir())
+from holophrasm.data_utils5 import *
 import numpy as np
 from models import *
 try:
@@ -462,10 +467,10 @@ def clip_gradient(optimizer, grad_clip):
             param.grad.data.clamp_(-grad_clip, grad_clip)
 
 if __name__ == "__main__":
-    breakpoint()
     initial_file_name = '../data/set.mm'
     text = file_contents(initial_file_name)
     database = meta_math_database(text,n=100000, remember_proof_steps=True)
+    
     fp = '../data'
     for split in ['train', 'valid', 'test']:
         fl = os.listdir(os.path.join(fp, split))
