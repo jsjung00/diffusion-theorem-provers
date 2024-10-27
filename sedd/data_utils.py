@@ -17,15 +17,19 @@ from torch.utils.data import DataLoader, Dataset, Subset
 import json 
 
 class ProofDataset:
-    def __init__(self, json_file='/home/justin/Desktop/Code/diffusion-theorem-provers/data/math.jsonl'):
+    def __init__(self, json_file='/home/justin/Desktop/Code/diffusion-theorem-provers/data/bigger_math.jsonl'):
         self.json_file = json_file 
         self.comb_strs = []
         self.load_seqs()
         self.tokenizer = GPT2TokenizerFast.from_pretrained('gpt2')
         self.tokenizer.add_special_tokens({'pad_token': '[PAD]'})
         self.EOS = self.tokenizer.encode(self.tokenizer.eos_token)[0]
+
         self.tokens = self.tokenizer([text + self.tokenizer.eos_token for text in self.comb_strs], padding=True, truncation=True,\
                                       max_length=1024, return_attention_mask=False, return_tensors='pt')
+        breakpoint()
+        #TODO: change length back to 1024
+
 
     def load_seqs(self):
         jsonObj = pd.read_json(path_or_buf=self.json_file, lines=True)
@@ -33,7 +37,8 @@ class ProofDataset:
             name = jsonObj['name'][i]
             statement = jsonObj['statement'][i]
             proof = jsonObj['proof'][i]
-            new_seq = f'Name: {name}\n Statement: {statement}\n Proof: {proof}'
+            new_seq = f'Name: {name}\n Statement: {statement}'
+            #new_seq = f'Name: {name}\n Statement: {statement}\n Proof: {proof}'
             self.comb_strs.append(new_seq)
 
     def __len__(self):
@@ -79,11 +84,6 @@ def get_dataset(mode:str):
 
 
 def get_dataloaders(config):
-    if config['training']['batch_size'] % (config['ngpus'] * config['training']['accum']) != 0:
-            raise ValueError(f"Train Batch Size {config['training']['batch_size']} is not divisible by {config['ngpus']} gpus with accumulation {config['training']['accum']}.")
-    if config['eval']['batch_size'] % (config['ngpus'] * config['training']['accum']) != 0:
-        raise ValueError(f"Eval Batch Size for {config['eval']['batch_size']} is not divisible by {config['ngpus']} gpus with accumulation {config['training']['accum']}.")
-
     train_set = get_dataset("train")
     valid_set = get_dataset("val")
 

@@ -469,7 +469,8 @@ def clip_gradient(optimizer, grad_clip):
 if __name__ == "__main__":
     initial_file_name = '../data/set.mm'
     text = file_contents(initial_file_name)
-    database = meta_math_database(text,n=100000, remember_proof_steps=True)
+    database = meta_math_database(text,n=100, remember_proof_steps=True)
+    breakpoint()
     
     fp = '../data'
     for split in ['train', 'valid', 'test']:

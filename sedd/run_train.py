@@ -24,6 +24,7 @@ from utils import action_seq_to_board, action_traj_idxs_unique
 torch.backends.cudnn.benchmark = True
 from transformers import GPT2TokenizerFast, GPT2LMHeadModel
 
+
 from utils import isValidSudoku
 
 def _run(cfg):
@@ -80,6 +81,9 @@ def _run(cfg):
     state = utils.restore_checkpoint(checkpoint_meta_dir, state, device)
     initial_step = int(state['step'])
 
+    # load in tokenizer 
+    tokenizer = GPT2TokenizerFast.from_pretrained('gpt2')
+
     # Build data iterators
     train_ds, eval_ds = data.get_dataloaders(cfg)
     train_iter = iter(train_ds)
@@ -124,6 +128,26 @@ def _run(cfg):
                 # Save the checkpoint.
                 save_step = step // cfg['training']['snapshot_freq']
                 utils.save_checkpoint(os.path.join(checkpoint_dir, f'checkpoint_{save_step}.pth'), state)
+
+                print(f"Generating text at step: {step}")
+                this_sample_dir = os.path.join(sample_dir, "iter_{}".format(step))
+                utils.makedirs(this_sample_dir)
+                sampling_shape = (cfg['training']['batch_size'], cfg['model']['length'])
+                sampling_fn = sampling.get_sampling_fn(cfg, graph, noise, sampling_shape, sampling_eps, device)
+                
+                sample = sampling_fn(score_model)
+                ema.restore(score_model.parameters())
+                
+                sentences = tokenizer.batch_decode(sample)
+                
+                file_name = os.path.join(this_sample_dir, f"sample.txt")
+                with open(file_name, 'w') as file:
+                    for sentence in sentences:
+                        file.write(sentence + "\n")
+                        file.write("============================================================================================\n")
+
+
+
         else:
             raise ValueError("Model step has not changed")
 
